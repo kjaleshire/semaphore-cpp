@@ -1,0 +1,38 @@
+project_name = semaphore
+
+cc = clang++
+cflags = -Wall -O2 -std=c++11
+
+nasm = nasm
+nasm_flags = -f macho64
+
+rvcc = riscv64-unknown-elf-gcc
+rv64gcflags = $cflags -mrvc -m64
+
+rule cc
+  command = $cc $cflags $in -o $out
+
+rule obj
+  command = $cc $cflags -c $in -o $out
+
+rule nasm
+  command = $nasm $nasm_flags $in -o $out
+
+rule asm_out
+  command = $cc $cflags -masm=intel -S $in
+
+rule rv64gc_cc
+  command = $rvcc $rv64gcflags $in -o $out
+
+rule rv64gc_asm_out
+  command = $rvcc $rv64gcflags -S $in -o $out
+
+build ${project_name}: cc ${project_name}.o
+build ${project_name}.o: obj ${project_name}.cpp
+
+build ${project_name}.s: asm_out ${project_name}.cpp
+
+build ${project_name}.rv: rv64gc_cc ${project_name}.cpp
+build ${project_name}.rv.s: rv64gc_asm_out ${project_name}.cpp
+
+default $project_name
